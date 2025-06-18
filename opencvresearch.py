@@ -247,6 +247,9 @@ def makePlot(b_vals, g_vals, r_vals, start_finish):
     total = b_vals + g_vals + r_vals
     mean = np.mean(total)
     median = np.median(total)
+    
+    window_size = (start_finish[1] - start_finish[0]) // 3
+    total = np.convolve(total, np.ones(window_size)/window_size, mode='valid')
     print("mean: ", mean)
     print("median", median)
     x_axis = countJumps(total, median, start_finish)
@@ -294,7 +297,7 @@ def countJumps(total, mean, start_finish):
                 cur_max = (j, total[j])
                 
             #if a
-            if (total[j] > (total[i] + mean*(2/3))): #finds the first candidate for a max point, need to check the ones directly following it
+            if (total[j] > (total[i] + mean*(1/3))): #finds the first candidate for a max point, need to check the ones directly following it
                 start = j
                 # check some spots after to ensure I have the actual maximum
                 while start < (j + (len_drop_formation * 0.7)) and start < len(total):
