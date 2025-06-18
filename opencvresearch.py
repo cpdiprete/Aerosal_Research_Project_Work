@@ -203,7 +203,7 @@ def rgbCount_watch_vid(x, y, box_size, vid_file):
     print("Finished reading video — plotting now.")
     makePlot(b_vals, g_vals, r_vals)
 
-def rgbcount_no_watch(x, y, box_size, vid_file):
+def rgbcount_no_watch(x, y, box_size, start_finish, vid_file):
     # cap = cv2.VideoCapture("./Shortvid.mov")
     cap = cv2.VideoCapture(vid_file)
     if not cap.isOpened():
@@ -240,16 +240,16 @@ def rgbcount_no_watch(x, y, box_size, vid_file):
     g_vals = np.array(g_vals)
     r_vals = np.array(r_vals)
     print("Finished reading video — plotting now.")
-    makePlot(b_vals, g_vals, r_vals)
+    makePlot(b_vals, g_vals, r_vals, start_finish)
     
     
-def makePlot(b_vals, g_vals, r_vals):
+def makePlot(b_vals, g_vals, r_vals, start_finish):
     total = b_vals + g_vals + r_vals
     mean = np.mean(total)
     median = np.median(total)
     print("mean: ", mean)
     print("median", median)
-    x_axis = countJumps(total, median)
+    x_axis = countJumps(total, median, start_finish)
     # mean = np.ones(np.shape(total)) * mean
     median = np.ones(np.shape(total)) * median
     frames = np.arange(len(total))  # x-axis: frame index/time
@@ -276,28 +276,31 @@ def makePlot(b_vals, g_vals, r_vals):
     plt.show()
     
     
-def countJumps(total, mean):
+def countJumps(total, mean, start_finish):
     min = np.min(total)
+    len_drop_formation = start_finish[1] - start_finish[0]
+    print(f"Length of droplet formation: {len_drop_formation}")
     mean -= min
-    print(f"Min is {min}, change check is {mean*(2/3)}")
+    print(f"Min is {min}, change check is {mean}")
     count = 0
     local_max_x_coords = []
     i = 0
     while i < len(total):
-        # print(f"i: {i}")
         cur_max = (0, 0)
         for j in range(i, len(total)):
-            if ((j - i) > 35): ## cuts it of when its over 35 frames (from testing this seemed to be the appropriate gap), this would be filled in with the inputs if they frame pick a full droplet cycle
+            if ((j - i) > (20)): ## cuts it of when its over 35 frames (from testing this seemed to be the appropriate gap), this would be filled in with the inputs if they frame pick a full droplet cycle
                 break
             if total[j] > cur_max[1]:
                 cur_max = (j, total[j])
+                
+            #if a
             if (total[j] > (total[i] + mean*(2/3))): #finds the first candidate for a max point, need to check the ones directly following it
                 start = j
-                while start < (j + 20) and start < len(total):
+                # check some spots after to ensure I have the actual maximum
+                while start < (j + (len_drop_formation * 0.7)) and start < len(total):
                     if total[start] > cur_max[1]:
                         cur_max = (start, total[start])
                     start += 1
-                
                 count += 1
                 # local_max_x_coords.append(i)
                 local_max_x_coords.append(cur_max[0])
@@ -327,7 +330,7 @@ if __name__ == "__main__":
     # details = makeBox("./Shortvid.mov") ## ry to make the diag boz
     details = makeBox(vid_file) ## ry to make the diag boz
     start, finish = userSelectsFrames(details[0], details[1], details[2], vid_file)
-    rgbcount_no_watch(details[0], details[1], details[2], (start, finish) vid_file)
+    rgbcount_no_watch(details[0], details[1], details[2], (start, finish), vid_file)
     
     
     
